@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import '../RegisterForm.css';
-import { registerUser as registerUserAPI } from '../services/api';
+import './RegisterForm.css';
+import { registerUser as registerUserAPI } from '../../services/api';
 
 const RegisterForm: React.FC = () => {
   const [firstName, setFirstName] = useState('');

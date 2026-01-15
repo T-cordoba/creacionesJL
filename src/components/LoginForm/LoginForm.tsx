@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../LoginForm.css';
-import { loginUser } from '../services/api';
+import './LoginForm.css';
+import { loginUser } from '../../services/api';
 
 const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
