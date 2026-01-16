@@ -1,20 +1,26 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import Button from '../Button/Button';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './RegisterForm.css';
-// import { registerUser as registerUserAPI } from '../../services/api';
 
 const RegisterForm: React.FC = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [addressdetails, setAddressdetails] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({
     email: '',
     password: '',
     confirmPassword: '',
+    general: '',
   });
 
   const validateEmail = (email: string) => {
@@ -60,20 +66,56 @@ const RegisterForm: React.FC = () => {
       isValid = false;
     }
 
-    console.log('Errores antes de setErrors:', newErrors); // Debugging
-    setErrors(newErrors);
+    setErrors({ ...newErrors, general: '' });
 
     if (isValid) {
+      setIsSubmitting(true);
+      setErrors({ ...newErrors, general: '' });
+
       try {
-        // await registerUserAPI(firstName, lastName, email, password);
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        window.location.href = '/login';
-      } catch (error) {
+        // Registrar usuario usando el contexto de autenticación
+        const { error } = await register(email, password, firstName, lastName);
+
+        if (error) {
+          // Manejar errores específicos de Supabase
+          if (error.message.includes('already registered')) {
+            setErrors({
+              ...newErrors,
+              email: 'Este correo electrónico ya está registrado.',
+              general: '',
+            });
+          } else if (error.message.includes('Password')) {
+            setErrors({
+              ...newErrors,
+              password: 'La contraseña debe tener al menos 6 caracteres.',
+              general: '',
+            });
+          } else {
+            setErrors({
+              ...newErrors,
+              general: error.message || 'Error al registrar. Por favor, intenta de nuevo.',
+            });
+          }
+        } else {
+          // Registro exitoso - limpiar formulario y redirigir
+          setFirstName('');
+          setLastName('');
+          setEmail('');
+          setPassword('');
+          setConfirmPassword('');
+          setPhone('');
+          setAddress('');
+          setAddressdetails('');
+          navigate('/login');
+        }
+      } catch (error: any) {
         console.error('Error al registrar:', error);
+        setErrors({
+          ...newErrors,
+          general: 'Ocurrió un error inesperado. Por favor, intenta de nuevo.',
+        });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -139,9 +181,43 @@ const RegisterForm: React.FC = () => {
         />
         {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
       </div>
-      <Button type="submit" variant="primary" fullWidth>
-        Registrarse
-      </Button>
+      <div className="form-group">
+        <label htmlFor="phone">Teléfono:</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="address">Dirección:</label>
+        <input
+          type="text"
+          id="address"
+          name="address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="addressdetails">Detalles de la dirección:</label>
+        <input
+          type="text"
+          id="addressdetails"
+          name="addressdetails"
+          value={addressdetails}
+          onChange={(e) => setAddressdetails(e.target.value)}
+          required
+        />
+      </div>
+      {errors.general && <p className="error-message">{errors.general}</p>}
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Registrando...' : 'Registrarse'}
+      </button>
     </form>
     <div className="register-form-footer">
         <p><Link to="/login">Ya tienes cuenta? Inicia sesión</Link></p>
